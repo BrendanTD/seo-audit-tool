@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Free SEO Audit — Trade Digital</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #0f0f0f; color: #f0f0f0; min-height: 100vh; padding: 40px 20px; }
+  .container { max-width: 780px; margin: 0 auto; }
+  h1 { font-size: 2rem; font-weight: 700; margin-bottom: 8px; }
+  .subtitle { color: #888; margin-bottom: 40px; font-size: 1rem; }
+  .card { background: #1a1a1a; border: 1px solid #2a2a2a; border-radius: 12px; padding: 32px; margin-bottom: 24px; }
+  label { display: block; font-size: 0.85rem; color: #888; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.05em; }
+  input { width: 100%; background: #0f0f0f; border: 1px solid #333; border-radius: 8px; padding: 12px 16px; color: #f0f0f0; font-size: 1rem; margin-bottom: 20px; outline: none; transition: border 0.2s; }
+  input:focus { border-color: #4ade80; }
+  button { width: 100%; background: #4ade80; color: #0f0f0f; border: none; border-radius: 8px; padding: 14px; font-size: 1rem; font-weight: 700; cursor: pointer; transition: opacity 0.2s; }
+  button:hover { opacity: 0.85; }
+  button:disabled { opacity: 0.4; cursor: not-allowed; }
+  .status { text-align: center; padding: 24px; color: #888; display: none; }
+  .spinner { width: 32px; height: 32px; border: 3px solid #333; border-top-color: #4ade80; border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 16px; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .results { display: none; }
+  .score-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 16px; margin-bottom: 24px; }
+  .score-box { background: #0f0f0f; border-radius: 8px; padding: 20px; text-align: center; }
+  .score-number { font-size: 2.2rem; font-weight: 700; }
+  .score-label { font-size: 0.75rem; color: #888; margin-top: 4px; text-transform: uppercase; letter-spacing: 0.05em; }
+  .good { color: #4ade80; }
+  .average { color: #facc15; }
+  .poor { color: #f87171; }
+  .analysis { white-space: pre-wrap; line-height: 1.7; font-size: 0.95rem; color: #d0d0d0; }
+  .error { background: #2a1a1a; border: 1px solid #5a2a2a; border-radius: 8px; padding: 16px; color: #f87171; display: none; }
+  .tag { display: inline-block; background: #1f2a1f; color: #4ade80; border-radius: 4px; padding: 2px 8px; font-size: 0.8rem; margin: 2px; }
+  .tag.bad { background: #2a1f1f; color: #f87171; }
+  h2 { font-size: 1.1rem; margin-bottom: 16px; color: #fff; }
+  .divider { border: none; border-top: 1px solid #2a2a2a; margin: 24px 0; }
+  .branding { text-align: center; margin-top: 32px; font-size: 0.8rem; color: #555; }
+  .branding a { color: #4ade80; text-decoration: none; }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <h1>Free SEO Audit</h1>
+  <p class="subtitle">See exactly what's holding your website back from ranking on Google.</p>
+
+  <div class="card">
+    <label for="bizName">Business Name</label>
+    <input type="text" id="bizName" placeholder="e.g. Auckland Plumbing Co" />
+    <label for="bizUrl">Website URL</label>
+    <input type="text" id="bizUrl" placeholder="e.g. https://yourwebsite.co.nz" />
+    <button id="auditBtn" onclick="runAudit()">Run My Free Audit →</button>
+  </div>
+
+  <div class="error" id="errorBox"></div>
+
+  <div class="status" id="statusBox">
+    <div class="spinner"></div>
+    <div id="statusText">Fetching your site data...</div>
+  </div>
+
+  <div class="results card" id="resultsBox">
+    <h2>Audit Results</h2>
+    <div class="score-grid" id="scoreGrid"></div>
+    <hr class="divider">
+    <div class="analysis" id="analysisText"></div>
+  </div>
+
+  <div class="branding">
+    Powered by <a href="http://tradedigital.co.nz" target="_blank">Trade Digital</a> — Digital Marketing & AI for NZ Trade Businesses
+  </div>
+
+</div>
+
+<script>
+// ============================================================
+// PASTE YOUR KEYS HERE
+const ANTHROPIC_KEY = "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";
+const PAGESPEED_KEY = "AIzaSyDeTIHwAgCt35YH7EV2tmKTRkaOFFAxqv0";
+// ============================================================
+
+function scoreColor(score) {
+  if (score >= 90) return 'good';
+  if (score >= 50) return 'average';
+  return 'poor';
+}
+
+function setStatus(text) {
+  document.getElementById('statusText').textContent = text;
+}
+
+async function runAudit() {
+  const bizName = document.getElementById('bizName').value.trim();
+  let bizUrl = document.getElementById('bizUrl').value.trim();
+
+  if (!bizName || !bizUrl) {
+    showError('Please enter both your business name and website URL.');
+    return;
+  }
+
+  if (!bizUrl.startsWith('http')) bizUrl = 'https://' + bizUrl;
+
+  document.getElementById('errorBox').style.display = 'none';
+  document.getElementById('resultsBox').style.display = 'none';
+  document.getElementById('statusBox').style.display = 'block';
+  document.getElementById('auditBtn').disabled = true;
+
+  try {
+    // Step 1: Fetch mobile PageSpeed data
+    setStatus('Analysing mobile performance...');
+    const mobileRes = await fetch(
+      `https://www.googleapis.com/pagespeedonline/v5/runPagespeed?url=${encodeURIComponent(bizUrl)}&strategy=mobile&key=${PAGESPEED_KEY}`
+    );
+    const mobileData = await mobileRes.json();
+
+    // Step 2: Fetch desktop PageSpeed data
+    setStatus('Analysing desktop performance...');
+    const desktopRes = await fetch(
+      `https://www.googleapis.com/pagespeedonline/v5/runPagespeed?url=${encodeURIComponent(bizUrl)}&strategy=desktop&key=${PAGESPEED_KEY}`
+    );
+    const desktopData = await desktopRes.json();
+
+    if (mobileData.error || desktopData.error) {
+      throw new Error('Could not fetch data for that URL. Check it is a live website.');
+    }
+
+    // Step 3: Extract key metrics
+    const mCats = mobileData.lighthouseResult?.categories || {};
+    const dCats = desktopData.lighthouseResult?.categories || {};
+    const audits = mobileData.lighthouseResult?.audits || {};
+
+    const metrics = {
+      mobilePerf: Math.round((mCats.performance?.score || 0) * 100),
+      desktopPerf: Math.round((dCats.performance?.score || 0) * 100),
+      mobileSEO: Math.round((mCats.seo?.score || 0) * 100),
+      accessibility: Math.round((mCats.accessibility?.score || 0) * 100),
+      bestPractices: Math.round((mCats['best-practices']?.score || 0) * 100),
+      hasMetaDesc: audits['meta-description']?.score === 1,
+      hasTitle: audits['document-title']?.score === 1,
+      isHTTPS: audits['is-on-https']?.score === 1,
+      isMobileFriendly: audits['viewport']?.score === 1,
+      hasRobots: audits['robots-txt']?.score === 1,
+      lcpMs: audits['largest-contentful-paint']?.displayValue || 'N/A',
+      cls: audits['cumulative-layout-shift']?.displayValue || 'N/A',
+      fcp: audits['first-contentful-paint']?.displayValue || 'N/A',
+      speedIndex: audits['speed-index']?.displayValue || 'N/A',
+    };
+
+    // Step 4: Render score boxes
+    setStatus('Generating your audit report...');
+    const grid = document.getElementById('scoreGrid');
+    grid.innerHTML = `
+      <div class="score-box"><div class="score-number ${scoreColor(metrics.mobilePerf)}">${metrics.mobilePerf}</div><div class="score-label">Mobile Speed</div></div>
+      <div class="score-box"><div class="score-number ${scoreColor(metrics.desktopPerf)}">${metrics.desktopPerf}</div><div class="score-label">Desktop Speed</div></div>
+      <div class="score-box"><div class="score-number ${scoreColor(metrics.mobileSEO)}">${metrics.mobileSEO}</div><div class="score-label">SEO Score</div></div>
+      <div class="score-box"><div class="score-number ${scoreColor(metrics.accessibility)}">${metrics.accessibility}</div><div class="score-label">Accessibility</div></div>
+      <div class="score-box"><div class="score-number ${scoreColor(metrics.bestPractices)}">${metrics.bestPractices}</div><div class="score-label">Best Practices</div></div>
+    `;
+
+    // Step 5: Build Claude prompt
+    const prompt = `You are an SEO consultant writing a plain-English audit report for a small NZ service business called "${bizName}".
+
+Here is their website data pulled from Google PageSpeed Insights:
+
+PERFORMANCE:
+- Mobile performance score: ${metrics.mobilePerf}/100
+- Desktop performance score: ${metrics.desktopPerf}/100
+- SEO score: ${metrics.mobileSEO}/100
+- Accessibility score: ${metrics.accessibility}/100
+- Best practices score: ${metrics.bestPractices}/100
+
+CORE WEB VITALS:
+- Largest Contentful Paint (LCP): ${metrics.lcpMs}
+- Cumulative Layout Shift (CLS): ${metrics.cls}
+- First Contentful Paint (FCP): ${metrics.fcp}
+- Speed Index: ${metrics.speedIndex}
+
+TECHNICAL CHECKS:
+- Has meta description: ${metrics.hasMetaDesc ? 'YES' : 'NO'}
+- Has page title tag: ${metrics.hasTitle ? 'YES' : 'NO'}
+- HTTPS secure: ${metrics.isHTTPS ? 'YES' : 'NO'}
+- Mobile friendly: ${metrics.isMobileFriendly ? 'YES' : 'NO'}
+- Has robots.txt: ${metrics.hasRobots ? 'YES' : 'NO'}
+
+Write a structured audit report with these exact sections:
+
+OVERALL SUMMARY
+2-3 sentences on the overall state of the site. Be direct. Don't sugarcoat poor scores.
+
+WHAT'S WORKING
+List 2-4 things the site is doing well (only if scores genuinely warrant it).
+
+CRITICAL ISSUES TO FIX FIRST
+List the highest priority problems. For each one: name the issue, explain in plain English why it matters for Google rankings, and give a clear action to fix it.
+
+NEXT PRIORITY IMPROVEMENTS
+Secondary issues worth addressing after the critical ones.
+
+WHAT FIXING THESE ISSUES COULD DO FOR YOU
+2-3 sentences on what improved rankings and performance typically means for a local NZ service business in terms of leads and visibility. Keep it realistic — no specific rank guarantees.
+
+Keep language simple. No jargon without explanation. Write like you're talking to a tradie who knows their trade but not Google. Be specific to their actual scores, not generic.`;
+
+    // Step 6: Call Claude API
+    const claudeRes = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': ANTHROPIC_KEY,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true'
+      },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1000,
+        messages: [{ role: 'user', content: prompt }]
+      })
+    });
+
+    const claudeData = await claudeRes.json();
+    const analysis = claudeData.content?.[0]?.text || 'Could not generate analysis.';
+
+    // Step 7: Display results
+    document.getElementById('statusBox').style.display = 'none';
+    document.getElementById('resultsBox').style.display = 'block';
+    document.getElementById('analysisText').textContent = analysis;
+
+  } catch (err) {
+    showError(err.message || 'Something went wrong. Please try again.');
+  }
+
+  document.getElementById('auditBtn').disabled = false;
+}
+
+function showError(msg) {
+  const box = document.getElementById('errorBox');
+  box.textContent = msg;
+  box.style.display = 'block';
+  document.getElementById('statusBox').style.display = 'none';
+  document.getElementById('auditBtn').disabled = false;
+}
+</script>
+</body>
+</html>
