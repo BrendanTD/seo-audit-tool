@@ -160,14 +160,14 @@ async function runAudit() {
     // Step 5: Build Claude prompt
     const prompt = `You are an SEO consultant writing a plain-English audit report for a small NZ service business called "${bizName}".
 
-Here is their website data pulled from Google PageSpeed Insights:
+Here is their website data pulled from Google PageSpeed Insights. IMPORTANT: Some scores may show as "Data unavailable" — this means the API did not return that data, NOT that the score is zero. Only comment on metrics where real data exists.
 
 PERFORMANCE:
-- Mobile performance score: ${metrics.mobilePerf}/100
-- Desktop performance score: ${metrics.desktopPerf}/100
-- SEO score: ${metrics.mobileSEO}/100
-- Accessibility score: ${metrics.accessibility}/100
-- Best practices score: ${metrics.bestPractices}/100
+- Mobile performance score: ${formatScore(metrics.mobilePerf)}
+- Desktop performance score: ${formatScore(metrics.desktopPerf)}
+- SEO score: ${formatScore(metrics.mobileSEO)}
+- Accessibility score: ${formatScore(metrics.accessibility)}
+- Best practices score: ${formatScore(metrics.bestPractices)}
 
 CORE WEB VITALS:
 - Largest Contentful Paint (LCP): ${metrics.lcpMs}
@@ -185,22 +185,21 @@ TECHNICAL CHECKS:
 Write a structured audit report with these exact sections:
 
 OVERALL SUMMARY
-2-3 sentences on the overall state of the site. Be direct. Don't sugarcoat poor scores.
+2-3 sentences on the overall state of the site based only on available data. Be honest but balanced — acknowledge what's working alongside what needs improvement.
 
 WHAT'S WORKING
-List 2-4 things the site is doing well (only if scores genuinely warrant it).
+List genuine positives based on the data. If scores are unavailable, skip those metrics rather than assuming the worst.
 
-CRITICAL ISSUES TO FIX FIRST
-List the highest priority problems. For each one: name the issue, explain in plain English why it matters for Google rankings, and give a clear action to fix it.
+AREAS TO IMPROVE
+List issues backed by actual data only. For each: name the issue, explain in one sentence why it matters, give a simple action to fix it. Do not fabricate problems for metrics marked as unavailable.
 
-NEXT PRIORITY IMPROVEMENTS
-Secondary issues worth addressing after the critical ones.
+IMPORTANT CONTEXT
+1-2 sentences noting that technical SEO is one factor among many — local signals like Google Business Profile, reviews, and local citations also heavily influence rankings and are not measured here.
 
 WHAT FIXING THESE ISSUES COULD DO FOR YOU
-2-3 sentences on what improved rankings and performance typically means for a local NZ service business in terms of leads and visibility. Keep it realistic — no specific rank guarantees.
+Keep it realistic. No specific rank guarantees. Frame around more visibility and better user experience.
 
-Keep language simple. No jargon without explanation. Write like you're talking to a tradie who knows their trade but not Google. Be specific to their actual scores, not generic.`;
-
+Keep language simple. Write like you're talking to a tradie. Never present unavailable data as a failing score.`;
     // Step 6: Call Claude API
     const claudeRes = await fetch(WORKER_URL, {
   method: 'POST',
