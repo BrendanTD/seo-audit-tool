@@ -75,7 +75,7 @@
 <script>
 // ============================================================
 // PASTE YOUR KEYS HERE
-const ANTHROPIC_KEY = "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";
+const WORKER_URL = "https://seo-audit-proxy.brendan-384.workers.dev/";
 const PAGESPEED_KEY = "AIzaSyDeTIHwAgCt35YH7EV2tmKTRkaOFFAxqv0";
 // ============================================================
 
@@ -202,20 +202,17 @@ WHAT FIXING THESE ISSUES COULD DO FOR YOU
 Keep language simple. No jargon without explanation. Write like you're talking to a tradie who knows their trade but not Google. Be specific to their actual scores, not generic.`;
 
     // Step 6: Call Claude API
-    const claudeRes = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': ANTHROPIC_KEY,
-        'anthropic-version': '2023-06-01',
-        'anthropic-dangerous-direct-browser-access': 'true'
-      },
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
-        max_tokens: 1000,
-        messages: [{ role: 'user', content: prompt }]
-      })
-    });
+    const claudeRes = await fetch(WORKER_URL, {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+  },
+  body: JSON.stringify({
+    model: 'claude-sonnet-4-20250514',
+    max_tokens: 1000,
+    messages: [{ role: 'user', content: prompt }]
+  })
+});
 
     const claudeData = await claudeRes.json();
     const analysis = claudeData.content?.[0]?.text || 'Could not generate analysis.';
