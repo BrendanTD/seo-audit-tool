@@ -158,6 +158,11 @@ async function runAudit() {
     `;
 
     // Step 5: Build Claude prompt
+   function formatScore(score) {
+  if (score === 'N/A' || score === 0 || score === null) return 'Data unavailable';
+  return `${score}/100`;
+}
+   
     const prompt = `You are an SEO consultant writing a plain-English audit report for a small NZ service business called "${bizName}".
 
 Here is their website data pulled from Google PageSpeed Insights. IMPORTANT: Some scores may show as "Data unavailable" — this means the API did not return that data, NOT that the score is zero. Only comment on metrics where real data exists.
