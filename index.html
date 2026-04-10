@@ -128,7 +128,6 @@ async function runAudit() {
     const mCats = mobileData.lighthouseResult?.categories || {};
     const dCats = desktopData.lighthouseResult?.categories || {};
     const audits = mobileData.lighthouseResult?.audits || {};
-   console.log('Categories:', JSON.stringify(mCats));
 
     const metrics = {
       mobilePerf: Math.round((mCats.performance?.score || 0) * 100),
@@ -225,7 +224,16 @@ Keep language simple. Write like you're talking to a tradie. Never present unava
     // Step 7: Display results
     document.getElementById('statusBox').style.display = 'none';
     document.getElementById('resultsBox').style.display = 'block';
-    document.getElementById('analysisText').textContent = analysis;
+    document.getElementById('analysisText').innerHTML = analysis
+  .replace(/^### (.+)$/gm, '<h3>$1</h3>')
+  .replace(/^## (.+)$/gm, '<h2>$1</h2>')
+  .replace(/^# (.+)$/gm, '<h1>$1</h1>')
+  .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+  .replace(/\*(.+?)\*/g, '<em>$1</em>')
+  .replace(/^- (.+)$/gm, '<li>$1</li>')
+  .replace(/(<li>.*<\/li>)/gs, '<ul>$1</ul>')
+  .replace(/\n\n/g, '<br><br>')
+  .replace(/\n/g, '<br>');
 
   } catch (err) {
     showError(err.message || 'Something went wrong. Please try again.');
