@@ -128,6 +128,7 @@ async function runAudit() {
     const mCats = mobileData.lighthouseResult?.categories || {};
     const dCats = desktopData.lighthouseResult?.categories || {};
     const audits = mobileData.lighthouseResult?.audits || {};
+   console.log('Categories:', JSON.stringify(mCats));
 
     const metrics = {
       mobilePerf: Math.round((mCats.performance?.score || 0) * 100),
