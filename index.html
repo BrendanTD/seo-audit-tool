@@ -163,9 +163,11 @@ async function runAudit() {
   return `${score}/100`;
 }
    
-    const prompt = `You are an SEO consultant writing a plain-English audit report for a small NZ service business called "${bizName}".
+    const prompt = `You are an SEO consultant writing a factual audit report for a small NZ service business called "${bizName}".
 
-Here is their website data pulled from Google PageSpeed Insights. IMPORTANT: Some scores may show as "Data unavailable" — this means the API did not return that data, NOT that the score is zero. Only comment on metrics where real data exists.
+Your job is to report only what the data shows. Do not invent positives or negatives. Do not pad the report with assumptions. If data is unavailable, say so and move on.
+
+WEBSITE DATA FROM GOOGLE PAGESPEED INSIGHTS:
 
 PERFORMANCE:
 - Mobile performance score: ${formatScore(metrics.mobilePerf)}
@@ -187,24 +189,41 @@ TECHNICAL CHECKS:
 - Mobile friendly: ${metrics.isMobileFriendly ? 'YES' : 'NO'}
 - Has robots.txt: ${metrics.hasRobots ? 'YES' : 'NO'}
 
-Write a structured audit report with these exact sections:
+SCORING GUIDE (use this to interpret scores accurately):
+- 90-100: Good — no action needed
+- 50-89: Needs improvement — worth fixing
+- 0-49: Poor — priority issue
 
-OVERALL SUMMARY
-2-3 sentences on the overall state of the site based only on available data. Be honest but balanced — acknowledge what's working alongside what needs improvement.
+Write the report using exactly these sections:
 
-WHAT'S WORKING
-List genuine positives based on the data. If scores are unavailable, skip those metrics rather than assuming the worst.
+## Overall Summary
+2-3 sentences. State what the data shows clearly and honestly. Do not soften poor scores or exaggerate good ones.
 
-AREAS TO IMPROVE
-List issues backed by actual data only. For each: name the issue, explain in one sentence why it matters, give a simple action to fix it. Do not fabricate problems for metrics marked as unavailable.
+## What's Working
+Only include items where the data genuinely supports a positive finding. If a score is 90+, it is good. If a technical check shows YES, it is working. Do not list something as working if the score is below 90. If nothing is genuinely strong, say "No standout strengths identified from available data."
 
-IMPORTANT CONTEXT
-1-2 sentences noting that technical SEO is one factor among many — local signals like Google Business Profile, reviews, and local citations also heavily influence rankings and are not measured here.
+## Issues to Fix
+Only list issues that are directly evidenced by the data. For each issue:
+- Name it
+- State the actual score or data point behind it
+- Explain in one sentence why it matters for rankings or users
+- Give one specific action to fix it
 
-WHAT FIXING THESE ISSUES COULD DO FOR YOU
-Keep it realistic. No specific rank guarantees. Frame around more visibility and better user experience.
+Do not list an issue if the data does not support it. Do not mention HTTPS as an issue if the HTTPS check shows YES.
 
-Keep language simple. Write like you're talking to a tradie. Never present unavailable data as a failing score.`;
+## Important Context
+2 sentences maximum. Note that this audit covers technical factors only. Local signals like Google Business Profile strength, reviews, and backlinks also heavily influence rankings and are not measured here.
+
+## What Improving These Issues Could Do
+2-3 realistic sentences. No specific rank guarantees. Focus on visibility and lead generation for a local NZ service business.
+
+Rules:
+- Write in plain English a tradie can understand
+- Never mention a score that shows as "Data unavailable"
+- Never contradict the data (e.g. do not flag missing HTTPS if the check shows YES)
+- Do not use filler phrases like "it's great to see" or "well done"
+- Be direct, not harsh, not soft`;
+   
     // Step 6: Call Claude API
     const claudeRes = await fetch(WORKER_URL, {
   method: 'POST',
