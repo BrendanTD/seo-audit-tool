@@ -98,7 +98,12 @@ async function runAudit() {
     return;
   }
 
-  if (!bizUrl.startsWith('http')) bizUrl = 'https://' + bizUrl;
+  try {
+  new URL(bizUrl);
+} catch {
+  showError('Please enter a valid URL including https:// — for example: https://www.yourbusiness.co.nz');
+  return;
+}
 
   document.getElementById('errorBox').style.display = 'none';
   document.getElementById('resultsBox').style.display = 'none';
@@ -107,7 +112,7 @@ async function runAudit() {
 
   try {
     // Step 1: Fetch mobile PageSpeed data
-    setStatus('Analysing mobile performance...');
+    setStatus('Fetching your site data — this takes up to 60 seconds, please wait...');
     const mobileRes = await fetch(
       `https://www.googleapis.com/pagespeedonline/v5/runPagespeed?url=${encodeURIComponent(bizUrl)}&strategy=mobile&category=performance&category=seo&category=accessibility&category=best-practices&key=${PAGESPEED_KEY}`
     );
@@ -120,9 +125,13 @@ async function runAudit() {
     );
     const desktopData = await desktopRes.json();
 
-    if (mobileData.error || desktopData.error) {
-      throw new Error('Could not fetch data for that URL. Check it is a live website.');
-    }
+   if (mobileData.error || desktopData.error) {
+  throw new Error(`PageSpeed could not analyse this website. This sometimes happens with certain hosting configurations. Try entering the URL without a trailing slash, or check the URL is correct.`);
+}
+
+if (!mobileData.lighthouseResult) {
+  throw new Error(`PageSpeed returned incomplete data for this site. The website may be blocking automated analysis tools.`);
+}
 
     // Step 3: Extract key metrics
     const mCats = mobileData.lighthouseResult?.categories || {};
@@ -222,6 +231,11 @@ Rules:
 - Never mention a score that shows as "Data unavailable"
 - Never contradict the data (e.g. do not flag missing HTTPS if the check shows YES)
 - Do not use filler phrases like "it's great to see" or "well done"
+- Always use ## for section headings
+- Always use **text** for bold
+- Always use - for bullet points
+- Never use # (single hash) headings
+- Always include one sentence in the Overall Summary clarifying that PageSpeed scores simulate slow mobile conditions and may differ from real-world experience on a fast connection
 - Be direct, not harsh, not soft`;
    
     // Step 6: Call Claude API
@@ -244,13 +258,12 @@ Rules:
     document.getElementById('statusBox').style.display = 'none';
     document.getElementById('resultsBox').style.display = 'block';
     document.getElementById('analysisText').innerHTML = analysis
-  .replace(/^### (.+)$/gm, '<h3>$1</h3>')
-  .replace(/^## (.+)$/gm, '<h2>$1</h2>')
-  .replace(/^# (.+)$/gm, '<h1>$1</h1>')
-  .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+  .replace(/^## (.+)$/gm, '<h2 style="font-size:1.1rem;color:#fff;margin:24px 0 10px;">$1</h2>')
+  .replace(/^### (.+)$/gm, '<h3 style="font-size:0.95rem;color:#ccc;margin:16px 0 8px;">$1</h3>')
+  .replace(/\*\*(.+?)\*\*/g, '<strong style="color:#fff;">$1</strong>')
   .replace(/\*(.+?)\*/g, '<em>$1</em>')
-  .replace(/^- (.+)$/gm, '<li>$1</li>')
-  .replace(/(<li>.*<\/li>)/gs, '<ul>$1</ul>')
+  .replace(/^- (.+)$/gm, '<li style="margin:6px 0;padding-left:4px;">$1</li>')
+  .replace(/(<li[^>]*>[\s\S]*?<\/li>\n?)+/g, '<ul style="margin:10px 0 10px 16px;list-style:disc;">$&</ul>')
   .replace(/\n\n/g, '<br><br>')
   .replace(/\n/g, '<br>');
 
