@@ -3,13 +3,14 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Free SEO Audit — Trade Digital</title>
+<title>Free Website Performance Check — Trade Digital</title>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #0f0f0f; color: #f0f0f0; min-height: 100vh; padding: 40px 20px; }
   .container { max-width: 780px; margin: 0 auto; }
   h1 { font-size: 2rem; font-weight: 700; margin-bottom: 8px; }
-  .subtitle { color: #888; margin-bottom: 40px; font-size: 1rem; }
+  .subtitle { color: #888; margin-bottom: 8px; font-size: 1rem; }
+  .scope-note { color: #555; font-size: 0.85rem; margin-bottom: 40px; border-left: 2px solid #333; padding-left: 12px; }
   .card { background: #1a1a1a; border: 1px solid #2a2a2a; border-radius: 12px; padding: 32px; margin-bottom: 24px; }
   label { display: block; font-size: 0.85rem; color: #888; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.05em; }
   input { width: 100%; background: #0f0f0f; border: 1px solid #333; border-radius: 8px; padding: 12px 16px; color: #f0f0f0; font-size: 1rem; margin-bottom: 20px; outline: none; transition: border 0.2s; }
@@ -20,6 +21,7 @@
   .status { text-align: center; padding: 24px; color: #888; display: none; }
   .spinner { width: 32px; height: 32px; border: 3px solid #333; border-top-color: #4ade80; border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 16px; }
   @keyframes spin { to { transform: rotate(360deg); } }
+  .status-note { font-size: 0.8rem; color: #555; margin-top: 8px; }
   .results { display: none; }
   .score-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 16px; margin-bottom: 24px; }
   .score-box { background: #0f0f0f; border-radius: 8px; padding: 20px; text-align: center; }
@@ -28,12 +30,17 @@
   .good { color: #4ade80; }
   .average { color: #facc15; }
   .poor { color: #f87171; }
-  .analysis { white-space: pre-wrap; line-height: 1.7; font-size: 0.95rem; color: #d0d0d0; }
-  .error { background: #2a1a1a; border: 1px solid #5a2a2a; border-radius: 8px; padding: 16px; color: #f87171; display: none; }
-  .tag { display: inline-block; background: #1f2a1f; color: #4ade80; border-radius: 4px; padding: 2px 8px; font-size: 0.8rem; margin: 2px; }
-  .tag.bad { background: #2a1f1f; color: #f87171; }
-  h2 { font-size: 1.1rem; margin-bottom: 16px; color: #fff; }
+  .analysis { line-height: 1.7; font-size: 0.95rem; color: #d0d0d0; }
+  .analysis h2 { font-size: 1.05rem; color: #fff; margin: 24px 0 10px; padding-bottom: 6px; border-bottom: 1px solid #2a2a2a; }
+  .analysis h3 { font-size: 0.95rem; color: #ccc; margin: 16px 0 8px; }
+  .analysis strong { color: #fff; }
+  .analysis ul { margin: 10px 0 10px 20px; list-style: disc; }
+  .analysis li { margin: 8px 0; }
+  .error { background: #2a1a1a; border: 1px solid #5a2a2a; border-radius: 8px; padding: 16px; color: #f87171; display: none; margin-bottom: 16px; }
+  h2.results-heading { font-size: 1.1rem; margin-bottom: 16px; color: #fff; }
   .divider { border: none; border-top: 1px solid #2a2a2a; margin: 24px 0; }
+  .disclaimer { background: #111; border: 1px solid #222; border-radius: 8px; padding: 14px 16px; margin-bottom: 24px; font-size: 0.82rem; color: #555; line-height: 1.5; }
+  .disclaimer span { color: #888; }
   .branding { text-align: center; margin-top: 32px; font-size: 0.8rem; color: #555; }
   .branding a { color: #4ade80; text-decoration: none; }
 </style>
@@ -41,15 +48,16 @@
 <body>
 <div class="container">
 
-  <h1>Free SEO Audit</h1>
-  <p class="subtitle">See exactly what's holding your website back from ranking on Google.</p>
+  <h1>Free Website Performance Check</h1>
+  <p class="subtitle">See how your website performs on speed, mobile, and core technical health.</p>
+  <p class="scope-note">This tool checks page speed, Core Web Vitals, and key technical factors. It does not measure keyword rankings, backlinks, or Google Business Profile — these are assessed separately as part of a full SEO review.</p>
 
   <div class="card">
     <label for="bizName">Business Name</label>
     <input type="text" id="bizName" placeholder="e.g. Auckland Plumbing Co" />
     <label for="bizUrl">Website URL</label>
-    <input type="text" id="bizUrl" placeholder="e.g. https://yourwebsite.co.nz" />
-    <button id="auditBtn" onclick="runAudit()">Run My Free Audit →</button>
+    <input type="text" id="bizUrl" placeholder="e.g. https://www.yourwebsite.co.nz" />
+    <button id="auditBtn" onclick="runAudit()">Check My Website Free →</button>
   </div>
 
   <div class="error" id="errorBox"></div>
@@ -57,36 +65,53 @@
   <div class="status" id="statusBox">
     <div class="spinner"></div>
     <div id="statusText">Fetching your site data...</div>
+    <div class="status-note">This takes up to 60 seconds — please don't close the page</div>
   </div>
 
   <div class="results card" id="resultsBox">
-    <h2>Audit Results</h2>
+    <h2 class="results-heading">Performance Results</h2>
     <div class="score-grid" id="scoreGrid"></div>
     <hr class="divider">
+    <div class="disclaimer"><span>Note:</span> PageSpeed scores simulate a slow mobile connection from Google's servers. Your site may feel faster on a real device with a good connection — both perspectives matter for your customers.</div>
     <div class="analysis" id="analysisText"></div>
   </div>
 
   <div class="branding">
-    Powered by <a href="http://tradedigital.co.nz" target="_blank">Trade Digital</a> — Digital Marketing & AI for NZ Trade Businesses
+    Powered by <a href="https://tradedigital.co.nz" target="_blank">Trade Digital</a> — Digital Marketing for NZ Trade Businesses
   </div>
 
 </div>
 
 <script>
-// ============================================================
-// PASTE YOUR KEYS HERE
-const PAGESPEED_KEY = "AIzaSyDeTIHwAgCt35YH7EV2tmKTRkaOFFAxqv0";
-const WORKER_URL = "https://seo-audit-proxy.brendan-384.workers.dev/";
-// ============================================================
+const PAGESPEED_KEY = "YOUR_PAGESPEED_API_KEY";
+const WORKER_URL = "YOUR_CLOUDFLARE_WORKER_URL";
 
 function scoreColor(score) {
+  if (score === 'N/A') return '';
   if (score >= 90) return 'good';
   if (score >= 50) return 'average';
   return 'poor';
 }
 
+function formatScore(score) {
+  if (score === 'N/A' || score === null || score === undefined) return 'Data unavailable';
+  return `${score}/100`;
+}
+
 function setStatus(text) {
   document.getElementById('statusText').textContent = text;
+}
+
+function renderMarkdown(text) {
+  return text
+    .replace(/^## (.+)$/gm, '<h2>$1</h2>')
+    .replace(/^### (.+)$/gm, '<h3>$1</h3>')
+    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+    .replace(/\*(.+?)\*/g, '<em>$1</em>')
+    .replace(/^- (.+)$/gm, '<li>$1</li>')
+    .replace(/(<li>[\s\S]*?<\/li>\n?)+/g, '<ul>$&</ul>')
+    .replace(/\n\n/g, '<br><br>')
+    .replace(/\n/g, '<br>');
 }
 
 async function runAudit() {
@@ -100,20 +125,25 @@ async function runAudit() {
 
   if (!bizUrl.startsWith('http')) bizUrl = 'https://' + bizUrl;
 
+  try {
+    new URL(bizUrl);
+  } catch {
+    showError('Please enter a valid URL — for example: https://www.yourbusiness.co.nz');
+    return;
+  }
+
   document.getElementById('errorBox').style.display = 'none';
   document.getElementById('resultsBox').style.display = 'none';
   document.getElementById('statusBox').style.display = 'block';
   document.getElementById('auditBtn').disabled = true;
 
   try {
-    // Step 1: Fetch mobile PageSpeed data
     setStatus('Analysing mobile performance...');
     const mobileRes = await fetch(
       `https://www.googleapis.com/pagespeedonline/v5/runPagespeed?url=${encodeURIComponent(bizUrl)}&strategy=mobile&category=performance&category=seo&category=accessibility&category=best-practices&key=${PAGESPEED_KEY}`
     );
     const mobileData = await mobileRes.json();
 
-    // Step 2: Fetch desktop PageSpeed data
     setStatus('Analysing desktop performance...');
     const desktopRes = await fetch(
       `https://www.googleapis.com/pagespeedonline/v5/runPagespeed?url=${encodeURIComponent(bizUrl)}&strategy=desktop&category=performance&category=seo&category=accessibility&category=best-practices&key=${PAGESPEED_KEY}`
@@ -121,23 +151,28 @@ async function runAudit() {
     const desktopData = await desktopRes.json();
 
     if (mobileData.error || desktopData.error) {
-      throw new Error('Could not fetch data for that URL. Check it is a live website.');
+      throw new Error('Could not analyse this website. Check the URL is correct and the site is live. Try including or removing "www" from the URL.');
     }
 
-    // Step 3: Extract key metrics
+    if (!mobileData.lighthouseResult) {
+      throw new Error('This website could not be analysed — it may be blocking automated tools. Try a different URL or contact us directly for a manual review.');
+    }
+
     const mCats = mobileData.lighthouseResult?.categories || {};
     const dCats = desktopData.lighthouseResult?.categories || {};
     const audits = mobileData.lighthouseResult?.audits || {};
 
+    const getScore = (cat) => cat?.score != null ? Math.round(cat.score * 100) : 'N/A';
+
     const metrics = {
-      mobilePerf: Math.round((mCats.performance?.score || 0) * 100),
-      desktopPerf: Math.round((dCats.performance?.score || 0) * 100),
-      mobileSEO: Math.round((mCats.seo?.score || 0) * 100),
-      accessibility: Math.round((mCats.accessibility?.score || 0) * 100),
-      bestPractices: Math.round((mCats['best-practices']?.score || 0) * 100),
+      mobilePerf: getScore(mCats.performance),
+      desktopPerf: getScore(dCats.performance),
+      mobileSEO: getScore(mCats.seo),
+      accessibility: getScore(mCats.accessibility),
+      bestPractices: getScore(mCats['best-practices']),
       hasMetaDesc: audits['meta-description']?.score === 1,
       hasTitle: audits['document-title']?.score === 1,
-      isHTTPS: audits['is-on-https']?.score === 1,
+      isHTTPS: bizUrl.startsWith('https://') && (audits['is-on-https']?.score === 1 || audits['is-on-https']?.score === null),
       isMobileFriendly: audits['viewport']?.score === 1,
       hasRobots: audits['robots-txt']?.score === 1,
       lcpMs: audits['largest-contentful-paint']?.displayValue || 'N/A',
@@ -146,81 +181,99 @@ async function runAudit() {
       speedIndex: audits['speed-index']?.displayValue || 'N/A',
     };
 
-    // Step 4: Render score boxes
-    setStatus('Generating your audit report...');
+    setStatus('Generating your report...');
+
     const grid = document.getElementById('scoreGrid');
-    grid.innerHTML = `
-      <div class="score-box"><div class="score-number ${scoreColor(metrics.mobilePerf)}">${metrics.mobilePerf}</div><div class="score-label">Mobile Speed</div></div>
-      <div class="score-box"><div class="score-number ${scoreColor(metrics.desktopPerf)}">${metrics.desktopPerf}</div><div class="score-label">Desktop Speed</div></div>
-      <div class="score-box"><div class="score-number ${scoreColor(metrics.mobileSEO)}">${metrics.mobileSEO}</div><div class="score-label">SEO Score</div></div>
-      <div class="score-box"><div class="score-number ${scoreColor(metrics.accessibility)}">${metrics.accessibility}</div><div class="score-label">Accessibility</div></div>
-      <div class="score-box"><div class="score-number ${scoreColor(metrics.bestPractices)}">${metrics.bestPractices}</div><div class="score-label">Best Practices</div></div>
-    `;
+    const scoreItems = [
+      { score: metrics.mobilePerf, label: 'Mobile Speed' },
+      { score: metrics.desktopPerf, label: 'Desktop Speed' },
+      { score: metrics.accessibility, label: 'Accessibility' },
+      { score: metrics.bestPractices, label: 'Best Practices' },
+    ];
 
-    // Step 5: Build Claude prompt
-    const prompt = `You are an SEO consultant writing a plain-English audit report for a small NZ service business called "${bizName}".
+    grid.innerHTML = scoreItems.map(item => `
+      <div class="score-box">
+        <div class="score-number ${scoreColor(item.score)}">${item.score}</div>
+        <div class="score-label">${item.label}</div>
+      </div>
+    `).join('');
 
-Here is their website data pulled from Google PageSpeed Insights:
+    const prompt = `You are a website performance consultant writing a factual report for a small NZ trade business called "${bizName}".
 
-PERFORMANCE:
-- Mobile performance score: ${metrics.mobilePerf}/100
-- Desktop performance score: ${metrics.desktopPerf}/100
-- SEO score: ${metrics.mobileSEO}/100
-- Accessibility score: ${metrics.accessibility}/100
-- Best practices score: ${metrics.bestPractices}/100
+Your job is to report only what the data shows. Do not invent positives or negatives. Do not pad the report. If a data point is unavailable, skip it entirely.
+
+WEBSITE PERFORMANCE DATA:
+
+SPEED SCORES (0-100, higher is better):
+- Mobile speed score: ${formatScore(metrics.mobilePerf)}
+- Desktop speed score: ${formatScore(metrics.desktopPerf)}
+- Accessibility score: ${formatScore(metrics.accessibility)}
+- Best practices score: ${formatScore(metrics.bestPractices)}
 
 CORE WEB VITALS:
-- Largest Contentful Paint (LCP): ${metrics.lcpMs}
-- Cumulative Layout Shift (CLS): ${metrics.cls}
-- First Contentful Paint (FCP): ${metrics.fcp}
+- Largest Contentful Paint (LCP — main content load time): ${metrics.lcpMs}
+- Cumulative Layout Shift (CLS — page stability): ${metrics.cls}
+- First Contentful Paint (FCP — time to first content): ${metrics.fcp}
 - Speed Index: ${metrics.speedIndex}
 
 TECHNICAL CHECKS:
-- Has meta description: ${metrics.hasMetaDesc ? 'YES' : 'NO'}
-- Has page title tag: ${metrics.hasTitle ? 'YES' : 'NO'}
 - HTTPS secure: ${metrics.isHTTPS ? 'YES' : 'NO'}
 - Mobile friendly: ${metrics.isMobileFriendly ? 'YES' : 'NO'}
+- Has meta description: ${metrics.hasMetaDesc ? 'YES' : 'NO'}
+- Has page title tag: ${metrics.hasTitle ? 'YES' : 'NO'}
 - Has robots.txt: ${metrics.hasRobots ? 'YES' : 'NO'}
 
-Write a structured audit report with these exact sections:
+SCORING GUIDE:
+- 90-100: Good
+- 50-89: Needs improvement
+- 0-49: Poor — priority fix
 
-OVERALL SUMMARY
-2-3 sentences on the overall state of the site. Be direct. Don't sugarcoat poor scores.
+Write the report using exactly these sections:
 
-WHAT'S WORKING
-List 2-4 things the site is doing well (only if scores genuinely warrant it).
+## Overall Summary
+2-3 sentences on what the data shows. Be honest and balanced. Note that speed scores simulate slow mobile conditions and real-world experience may differ.
 
-CRITICAL ISSUES TO FIX FIRST
-List the highest priority problems. For each one: name the issue, explain in plain English why it matters for Google rankings, and give a clear action to fix it.
+## What's Working
+Only list items where data genuinely supports a positive. Score 90+ = good. Technical check YES = working. If nothing qualifies, write "No standout strengths identified from available data."
 
-NEXT PRIORITY IMPROVEMENTS
-Secondary issues worth addressing after the critical ones.
+## What to Improve
+Only list issues backed by actual data. For each:
+- Name the issue
+- State the actual score or value
+- One sentence on why it matters for customers or Google
+- One specific action to fix it
 
-WHAT FIXING THESE ISSUES COULD DO FOR YOU
-2-3 sentences on what improved rankings and performance typically means for a local NZ service business in terms of leads and visibility. Keep it realistic — no specific rank guarantees.
+Do not list HTTPS as an issue if the HTTPS check is YES.
 
-Keep language simple. No jargon without explanation. Write like you're talking to a tradie who knows their trade but not Google. Be specific to their actual scores, not generic.`;
+## What This Tool Doesn't Measure
+Write exactly this paragraph, word for word: "This check covers technical performance only. It does not measure keyword rankings, backlinks, Google Business Profile strength, or review volume — all of which are major factors in where you rank on Google. A full SEO review covers these areas separately."
 
-    // Step 6: Call Claude API
+## What Improving These Could Do For You
+2-3 realistic sentences about better user experience and visibility for a local NZ trade business. No rank guarantees.
+
+Rules:
+- Plain English — write for a tradie, not a developer
+- Never mention unavailable data
+- Never flag HTTPS if the check shows YES
+- No filler phrases
+- Use ## for headings, ** for bold, - for bullet points`;
+
     const claudeRes = await fetch(WORKER_URL, {
-  method: 'POST',
-  headers: {
-    'Content-Type': 'application/json',
-  },
-  body: JSON.stringify({
-    model: 'claude-sonnet-4-20250514',
-    max_tokens: 1000,
-    messages: [{ role: 'user', content: prompt }]
-  })
-});
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1000,
+        messages: [{ role: 'user', content: prompt }]
+      })
+    });
 
     const claudeData = await claudeRes.json();
-    const analysis = claudeData.content?.[0]?.text || 'Could not generate analysis.';
+    const analysis = claudeData.content?.[0]?.text || 'Could not generate analysis. Please try again.';
 
-    // Step 7: Display results
     document.getElementById('statusBox').style.display = 'none';
     document.getElementById('resultsBox').style.display = 'block';
-    document.getElementById('analysisText').textContent = analysis;
+    document.getElementById('analysisText').innerHTML = renderMarkdown(analysis);
 
   } catch (err) {
     showError(err.message || 'Something went wrong. Please try again.');
